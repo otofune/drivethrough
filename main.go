@@ -46,10 +46,12 @@ func main() {
 		}
 		defer reader.Close()
 		w.WriteHeader(200)
-		if _, err := io.Copy(w, reader); err != nil {
+		bytes, err := io.Copy(w, reader)
+		if err != nil {
 			log.Println(err)
 			return
 		}
+		log.Printf("-> %d bytes transferred\n", bytes)
 	}
 
 	s := &http.Server{
