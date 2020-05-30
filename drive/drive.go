@@ -5,13 +5,37 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 
 	"google.golang.org/api/drive/v3"
 )
 
+type stringSyncMap struct {
+	sm sync.Map
+}
+
+func (f *stringSyncMap) Lookup(k string) string {
+	v, ok := f.sm.Load(k)
+	if !ok {
+		return ""
+	}
+
+	t, ok := v.(string)
+	if !ok {
+		fmt.Printf("Lookup %s failed: type is not string\n", k)
+		return ""
+	}
+
+	return t
+}
+
+func (f *stringSyncMap) Store(k, id string) {
+	f.sm.Store(k, id)
+}
+
 type FilePicker struct {
 	drive         *drive.Service
-	cacheIDByPath map[string]string
+	cacheIDByPath stringSyncMap
 }
 
 func NewFilePicker(client *http.Client) (*FilePicker, error) {
@@ -21,7 +45,7 @@ func NewFilePicker(client *http.Client) (*FilePicker, error) {
 	}
 	return &FilePicker{
 		drive:         srv,
-		cacheIDByPath: map[string]string{},
+		cacheIDByPath: stringSyncMap{},
 	}, nil
 }
 
@@ -31,8 +55,9 @@ func (p *FilePicker) Lookup(path string) (string, error) {
 	names := strings.Split(path, "/")[1:]
 	for i, name := range names {
 		currentPath := "/" + strings.Join(names[:i+1], "/")
-		if p.cacheIDByPath[currentPath] != "" {
-			currentID = p.cacheIDByPath[currentPath]
+		cachedID := p.cacheIDByPath.Lookup(currentPath)
+		if cachedID != "" {
+			currentID = cachedID
 			continue
 		}
 
@@ -61,7 +86,7 @@ func (p *FilePicker) Lookup(path string) (string, error) {
 				// FIXME: map で持つ構造がショートカットを前提にしていないので、そこが間違っている気がする
 				currentID = file.ShortcutDetails.TargetId
 			}
-			p.cacheIDByPath[currentPath] = currentID
+			p.cacheIDByPath.Store(currentPath, currentID)
 			continue
 		}
 
