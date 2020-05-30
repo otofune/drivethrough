@@ -46,7 +46,7 @@ func (p *FilePicker) Lookup(path string) (string, error) {
 			query += " and mimeType = 'application/vnd.google-apps.folder'"
 		}
 
-		list, err := p.drive.Files.List().Fields("files(id, name)").Q(query).Do()
+		list, err := p.drive.Files.List().Fields("files(id, name, mimeType, shortcutDetails)").Q(query).Do()
 		if err != nil {
 			return "", err
 		}
@@ -57,7 +57,11 @@ func (p *FilePicker) Lookup(path string) (string, error) {
 		if len(list.Files) == 1 {
 			file := list.Files[0]
 			currentID = file.Id
-			p.cacheIDByPath[currentPath] = file.Id
+			if file.MimeType == "application/vnd.google-apps.shortcut" && file.ShortcutDetails != nil {
+				// FIXME: map で持つ構造がショートカットを前提にしていないので、そこが間違っている気がする
+				currentID = file.ShortcutDetails.TargetId
+			}
+			p.cacheIDByPath[currentPath] = currentID
 			continue
 		}
 
