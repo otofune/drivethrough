@@ -27,6 +27,7 @@ func main() {
 		log.Printf("<- %s %s\n", r.Method, r.RequestURI)
 
 		w.Header().Set("via", "drivethrough/0")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		if r.Method != http.MethodGet {
 			w.WriteHeader(400)
 			io.WriteString(w, "GET only supported.")
