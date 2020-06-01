@@ -66,9 +66,9 @@ func (p *FilePicker) Lookup(path string) (string, error) {
 		}
 		isDirectory := i != len(names)-1
 
-		query := fmt.Sprintf("name = '%s' and '%s' in parents", strings.ReplaceAll(name, ",", "\\,"), currentID)
+		query := fmt.Sprintf("name = '%s' and '%s' in parents and trashed = false", strings.ReplaceAll(name, ",", "\\,"), currentID)
 		if isDirectory {
-			query += " and mimeType = 'application/vnd.google-apps.folder'"
+			query += " and (mimeType = 'application/vnd.google-apps.folder' or mimeType = 'application/vnd.google-apps.shortcut')"
 		}
 
 		list, err := p.drive.Files.List().Fields("files(id, name, mimeType, shortcutDetails)").Q(query).Do()
