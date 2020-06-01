@@ -83,6 +83,9 @@ func (p *FilePicker) Lookup(path string) (string, error) {
 			file := list.Files[0]
 			currentID = file.Id
 			if file.MimeType == "application/vnd.google-apps.shortcut" && file.ShortcutDetails != nil {
+				if isDirectory && file.ShortcutDetails.TargetMimeType != "application/vnd.google-apps.folder" {
+					return "", fmt.Errorf("%s is expected to be shortcut to directory, but to not directory (%s)", currentPath, file.ShortcutDetails.TargetMimeType)
+				}
 				// FIXME: map で持つ構造がショートカットを前提にしていないので、そこが間違っている気がする
 				currentID = file.ShortcutDetails.TargetId
 			}
