@@ -49,6 +49,11 @@ func NewFilePicker(client *http.Client) (*FilePicker, error) {
 	}, nil
 }
 
+func escape(s string) string {
+	s = strings.ReplaceAll(s, "'", "\\'")
+	return s
+}
+
 // Lookup Get fileID from path
 func (p *FilePicker) Lookup(path string) (string, error) {
 	currentID := "root"
@@ -66,7 +71,7 @@ func (p *FilePicker) Lookup(path string) (string, error) {
 		}
 		isDirectory := i != len(names)-1
 
-		query := fmt.Sprintf("name = '%s' and '%s' in parents and trashed = false", strings.ReplaceAll(name, ",", "\\,"), currentID)
+		query := fmt.Sprintf("name = '%s' and '%s' in parents and trashed = false", escape(name), currentID)
 		if isDirectory {
 			query += " and (mimeType = 'application/vnd.google-apps.folder' or mimeType = 'application/vnd.google-apps.shortcut')"
 		}
